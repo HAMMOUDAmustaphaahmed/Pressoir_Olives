@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier le Graphique - Pressoir à Olives{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .chart-preview {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        min-height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-edit"></i> Modifier le Graphique
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Configuration du graphique</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('charts.edit_chart', chart_id=chart.id) }}">
+                    <div class="mb-3">
+                        <label for="chart_name" class="form-label">Nom du graphique</label>
+                        <input type="text" class="form-control" id="chart_name" name="chart_name" value="{{ chart.name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="table_name" class="form-label">Table de données</label>
+                        <select class="form-select" id="table_name" name="table_name" required disabled>
+                            <option value="{{ chart.table_name }}" selected>{{ chart.table_name }}</option>
+                        </select>
+                        <small class="text-muted">La table ne peut pas être modifiée</small>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="x_column" class="form-label">Axe X (Catégorie)</label>
+                            <select class="form-select" id="x_column" name="x_column" required>
+                                <option value="">Sélectionnez une colonne</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="y_column" class="form-label">Axe Y (Valeur)</label>
+                            <select class="form-select" id="y_column" name="y_column" required>
+                                <option value="">Sélectionnez une colonne</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="chart_type" class="form-label">Type de graphique</label>
+                        <select class="form-select" id="chart_type" name="chart_type" required>
+                            <option value="bar" {% if chart.chart_type == 'bar' %}selected{% endif %}>Barres</option>
+                            <option value="line" {% if chart.chart_type == 'line' %}selected{% endif %}>Ligne</option>
+                            <option value="pie" {% if chart.chart_type == 'pie' %}selected{% endif %}>Camembert</option>
+                            <option value="doughnut" {% if chart.chart_type == 'doughnut' %}selected{% endif %}>Anneau</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Enregistrer les modifications
+                    </button>
+                    <a href="{{ url_for('charts.view_charts') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Aperçu du graphique</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-preview d-flex align-items-center justify-content-center">
+                    <p class="text-muted text-center">
+                        <i class="fas fa-chart-bar fa-3x mb-3"></i><br>
+                        L'aperçu du graphique apparaîtra ici<br>
+                        après la configuration
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialisation de Select2
+        $('#x_column, #y_column').select2();
+        
+        // Charger les colonnes de la table actuelle
+        const tableName = "{{ chart.table_name }}";
+        const currentX = "{{ chart.x_column }}";
+        const currentY = "{{ chart.y_column }}";
+        
+        if (tableName) {
+            fetch(`/get_table_columns/${tableName}`)
+                .then(response => response.json())
+                .then(columns => {
+                    $('#x_column').empty().append('<option value="">Sélectionnez une colonne</option>');
+                    $('#y_column').empty().append('<option value="">Sélectionnez une colonne</option>');
+                    
+                    columns.forEach(column => {
+                        const xSelected = column.name === currentX ? 'selected' : '';
+                        const ySelected = column.name === currentY ? 'selected' : '';
+                        $('#x_column').append(`<option value="${column.name}">${column.display_name} (${column.type})</option>`);
+                        $('#y_column').append(`<option value="${column.name}">${column.display_name} (${column.type})</option>`);
+                    });
+                    
+                    // Forcer la mise à jour de Select2
+                    $('#x_column').trigger('change');
+                    $('#y_column').trigger('change');
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                });
+        }
+    });
+</script>
+{% endblock %}

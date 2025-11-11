@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter un Graphique - Pressoir à Olives{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .chart-preview {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        min-height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-line"></i> Ajouter un Graphique
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Configuration du graphique</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('charts.add_chart') }}">
+                    <div class="mb-3">
+                        <label for="chart_name" class="form-label">Nom du graphique</label>
+                        <input type="text" class="form-control" id="chart_name" name="chart_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="table_name" class="form-label">Table de données</label>
+                        <select class="form-select" id="table_name" name="table_name" required>
+                            <option value="">Sélectionnez une table</option>
+                            {% for table in tables %}
+                            <option value="{{ table.name }}">{{ table.display_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="x_column" class="form-label">Axe X (Catégorie)</label>
+                            <select class="form-select" id="x_column" name="x_column" required>
+                                <option value="">Sélectionnez d'abord une table</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="y_column" class="form-label">Axe Y (Valeur)</label>
+                            <select class="form-select" id="y_column" name="y_column" required>
+                                <option value="">Sélectionnez d'abord une table</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="chart_type" class="form-label">Type de graphique</label>
+                        <select class="form-select" id="chart_type" name="chart_type" required>
+                            <option value="bar">Barres</option>
+                            <option value="line">Ligne</option>
+                            <option value="pie">Camembert</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Créer le graphique
+                    </button>
+                    <a href="{{ url_for('charts.view_charts') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Aperçu du graphique</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-preview d-flex align-items-center justify-content-center">
+                    <p class="text-muted text-center">
+                        <i class="fas fa-chart-bar fa-3x mb-3"></i><br>
+                        L'aperçu du graphique apparaîtra ici<br>
+                        après la configuration
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Aide</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Axe X (Catégorie):</strong> Sélectionnez la colonne qui contient les libellés (noms, dates, etc.)</p>
+                <p><strong>Axe Y (Valeur):</strong> Sélectionnez la colonne qui contient les valeurs numériques à représenter</p>
+                <p><strong>Types de graphiques:</strong></p>
+                <ul class="small">
+                    <li><strong>Barres:</strong> Comparaison de valeurs entre différentes catégories</li>
+                    <li><strong>Ligne:</strong> Évolution dans le temps</li>
+                    <li><strong>Camembert:</strong> Répartition en pourcentages</li>
+                    <li><strong>Anneau:</strong> Variante du camembert avec un trou au centre</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section de débogage -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Débogage</h5>
+    </div>
+    <div class="card-body">
+        <p>Tables disponibles: {{ tables|length }}</p>
+        <ul>
+            {% for table in tables %}
+            <li>{{ table.name }} ({{ table.display_name }}) - Colonnes: {{ table.columns|length }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Inclure jQuery AVANT Select2 -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    // Attendre que le document soit prêt
+    $(document).ready(function() {
+        console.log("Document ready - Initialisation de Select2");
+        
+        // Initialisation de Select2
+        $('#table_name, #x_column, #y_column').select2();
+        
+        // Chargement dynamique des colonnes
+        $('#table_name').change(function() {
+            const tableName = $(this).val();
+            console.log("Table sélectionnée:", tableName);
+            
+            if (tableName) {
+                // Forcer le rechargement sans cache
+                fetch(`/get_table_columns/${tableName}?t=${new Date().getTime()}`)
+                    .then(response => {
+                        console.log("Réponse reçue, status:", response.status);
+                        return response.json();
+                    })
+                    .then(columns => {
+                        console.log("Colonnes reçues:", columns);
+                        
+                        $('#x_column').empty().append('<option value="">Sélectionnez une colonne</option>');
+                        $('#y_column').empty().append('<option value="">Sélectionnez une colonne</option>');
+                        
+                        columns.forEach(column => {
+                        $('#x_column').append(`<option value="${column.name}">${column.display_name} (${column.type})</option>`);
+                        $('#y_column').append(`<option value="${column.name}">${column.display_name} (${column.type})</option>`);
+                    });
+                        
+                        // Forcer la mise à jour de Select2
+                        $('#x_column').trigger('change');
+                        $('#y_column').trigger('change');
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        $('#x_column').empty().append('<option value="">Erreur de chargement</option>');
+                        $('#y_column').empty().append('<option value="">Erreur de chargement</option>');
+                    });
+            } else {
+                $('#x_column').empty().append('<option value="">Sélectionnez d\'abord une table</option>');
+                $('#y_column').empty().append('<option value="">Sélectionnez d\'abord une table</option>');
+            }
+        });
+        
+        // Mise à jour de l'aperçu en temps réel
+        $('#chart_type, #x_column, #y_column').change(function() {
+            updateChartPreview();
+        });
+        
+        function updateChartPreview() {
+            const chartType = $('#chart_type').val();
+            const xColumn = $('#x_column').val();
+            const yColumn = $('#y_column').val();
+            
+            if (chartType && xColumn && yColumn) {
+                $('.chart-preview').html(`
+                    <div class="text-center">
+                        <i class="fas fa-${getChartIcon(chartType)} fa-3x text-primary mb-3"></i>
+                        <p>Graphique ${getChartTypeName(chartType)} configuré</p>
+                        <small class="text-muted">
+                            X: ${$('#x_column option:selected').text()}<br>
+                            Y: ${$('#y_column option:selected').text()}
+                        </small>
+                    </div>
+                `);
+            }
+        }
+        
+        function getChartIcon(type) {
+            const icons = {
+                'bar': 'chart-bar',
+                'line': 'chart-line',
+                'pie': 'chart-pie',
+                'doughnut': 'chart-pie'
+            };
+            return icons[type] || 'chart-bar';
+        }
+        
+        function getChartTypeName(type) {
+            const names = {
+                'bar': 'à barres',
+                'line': 'en ligne',
+                'pie': 'camembert',
+                'doughnut': 'en anneau'
+            };
+            return names[type] || '';
+        }
+    });
+</script>
+{% endblock %}

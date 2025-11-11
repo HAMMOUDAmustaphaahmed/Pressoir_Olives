@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Pressoir à Olives{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ tables|length }}</h4>
+                        <p class="card-text">Tables créées</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-table fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ charts_count }}</h4>
+                        <p class="card-text">Graphiques</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-bar fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Actions rapides</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if current_user.access_level in ['read_write', 'read_write_edit', 'full'] %}
+                    <a href="{{ url_for('tables.create_table') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus-circle"></i> Créer une nouvelle table
+                    </a>
+                    <a href="{{ url_for('charts.add_chart') }}" class="btn btn-outline-success">
+                        <i class="fas fa-chart-line"></i> Ajouter un graphique
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('tables.manage_tables') }}" class="btn btn-outline-info">
+                        <i class="fas fa-list"></i> Gérer les tables
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Tables récentes</h5>
+            </div>
+            <div class="card-body">
+                {% if tables %}
+                <div class="list-group">
+                    {% for table in tables[:5] %}
+                    <a href="{{ url_for('tables.table_data', table_name=table.name) }}" 
+                       class="list-group-item list-group-item-action">
+                        <i class="fas fa-table"></i> {{ table.display_name }}
+                        <span class="badge bg-primary float-end">{{ table.columns|length }} colonnes</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Aucune table créée pour le moment.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des Tables - Pressoir à Olives{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-table"></i> Gestion des Tables
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5>Liste des tables</h5>
+            {% if current_user.access_level in ['read_write', 'read_write_edit', 'full'] %}
+            <a href="{{ url_for('tables.create_table') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Créer une nouvelle table
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if tables %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nom d'affichage</th>
+                                <th>Nom technique</th>
+                                <th>Nombre de colonnes</th>
+                                <th>Date de création</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for table in tables %}
+                            <tr>
+                                <td>{{ table.display_name }}</td>
+                                <td><code>{{ table.name }}</code></td>
+                                <td>{{ table.columns|length }}</td>
+                                <td>{{ table.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('tables.table_data', table_name=table.name) }}" 
+                                       class="btn btn-sm btn-info" title="Voir les données">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if current_user.access_level in ['read_write_edit', 'full'] %}
+                                    <button class="btn btn-sm btn-warning edit-structure" 
+                                            data-table-name="{{ table.name }}"
+                                            data-table-id="{{ table.id }}"
+                                            title="Modifier la structure">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {% endif %}
+                                    {% if current_user.access_level == 'full' %}
+                                    <button class="btn btn-sm btn-danger delete-table" 
+                                            data-table-name="{{ table.name }}"
+                                            data-table-id="{{ table.id }}"
+                                            title="Supprimer la table">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-table fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucune table créée pour le moment.</p>
+                    {% if current_user.access_level in ['read_write', 'read_write_edit', 'full'] %}
+                    <a href="{{ url_for('tables.create_table') }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i> Créer votre première table
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour supprimer une table -->
+<div class="modal fade" id="deleteTableModal" tabindex="-1" aria-labelledby="deleteTableModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTableModalLabel">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer la table <strong id="table-to-delete-name"></strong> ?</p>
+                <p class="text-danger"><strong>Attention :</strong> Cette action supprimera également toutes les données de cette table et ne peut pas être annulée.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form id="delete-table-form" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de la suppression des tables
+    document.querySelectorAll('.delete-table').forEach(button => {
+        button.addEventListener('click', function() {
+            const tableName = this.getAttribute('data-table-name');
+            const tableId = this.getAttribute('data-table-id');
+            
+            document.getElementById('table-to-delete-name').textContent = tableName;
+            
+            // Configurer le formulaire de suppression
+            const form = document.getElementById('delete-table-form');
+            form.action = "{{ url_for('tables.delete_table', table_id=0) }}".replace('0', tableId);
+            
+            // Afficher le modal
+            const modal = new bootstrap.Modal(document.getElementById('deleteTableModal'));
+            modal.show();
+        });
+    });
+
+    // Gestion de la modification de structure (pour l'instant juste un message)
+    document.querySelectorAll('.edit-structure').forEach(button => {
+        button.addEventListener('click', function() {
+            const tableName = this.getAttribute('data-table-name');
+            alert('La modification de la structure de la table "' + tableName + '" n\'est pas encore implémentée.');
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+
+{% block title %}Créer une Table - Pressoir à Olives{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-table"></i> Créer une Nouvelle Table
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Configuration de la table</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="create-table-form">
+                    <div class="mb-3">
+                        <label for="table_name" class="form-label">Nom technique de la table</label>
+                        <input type="text" class="form-control" id="table_name" name="table_name" 
+                               pattern="[a-zA-Z_][a-zA-Z0-9_]*" title="Le nom doit commencer par une lettre et ne contenir que des lettres, chiffres et underscores" required>
+                        <div class="form-text">Ce nom sera utilisé en interne (sans espaces, sans accents)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="display_name" class="form-label">Nom d'affichage</label>
+                        <input type="text" class="form-control" id="display_name" name="display_name" required>
+                        <div class="form-text">Ce nom sera affiché dans l'interface</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Colonnes</label>
+                        <div id="columns-container">
+                            <!-- Les champs de colonnes seront ajoutés ici dynamiquement -->
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-column">
+                            <i class="fas fa-plus"></i> Ajouter une colonne
+                        </button>
+                    </div>
+                    
+                    <!-- Champ caché pour les colonnes en JSON -->
+                    <input type="hidden" id="columns-json" name="columns" value="">
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Créer la table
+                    </button>
+                    <a href="{{ url_for('tables.manage_tables') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Annuler
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Aide</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Nom technique:</strong> Doit être unique et ne contenir que des lettres, chiffres et underscores.</p>
+                <p><strong>Exemples de tables:</strong></p>
+                <ul class="small">
+                    <li><strong>clients</strong> - Gestion des clients</li>
+                    <li><strong>caisses_olives</strong> - Suivi des caisses d'olives</li>
+                    <li><strong>machines</strong> - Inventaire des machines</li>
+                    <li><strong>vehicules</strong> - Gestion du parc automobile</li>
+                </ul>
+                <p><strong>Types de données:</strong></p>
+                <ul class="small">
+                    <li><strong>Texte:</strong> Pour les chaînes de caractères (noms, descriptions)</li>
+                    <li><strong>Nombre entier:</strong> Pour les nombres sans décimales (quantités, âge)</li>
+                    <li><strong>Nombre décimal:</strong> Pour les nombres avec décimales (prix, poids)</li>
+                    <li><strong>Date:</strong> Pour les dates (date de réception, date de paiement)</li>
+                    <li><strong>Oui/Non:</strong> Pour les valeurs booléennes (actif/inactif)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const addColumnBtn = document.getElementById('add-column');
+        const columnsContainer = document.getElementById('columns-container');
+        const columnsJsonInput = document.getElementById('columns-json');
+        let columnCount = 0;
+        
+        // Fonction pour mettre à jour le JSON des colonnes
+        function updateColumnsJson() {
+            const columns = [];
+            const columnRows = document.querySelectorAll('.column-row');
+            
+            columnRows.forEach(row => {
+                const nameInput = row.querySelector('.column-name');
+                const displayNameInput = row.querySelector('.column-display-name');
+                const typeSelect = row.querySelector('.column-type');
+                
+                if (nameInput && displayNameInput && typeSelect) {
+                    const name = nameInput.value.trim();
+                    const displayName = displayNameInput.value.trim();
+                    const type = typeSelect.value;
+                    
+                    if (name && displayName && type) {
+                        columns.push({
+                            name: name,
+                            display_name: displayName,
+                            type: type
+                        });
+                    }
+                }
+            });
+            
+            columnsJsonInput.value = JSON.stringify(columns);
+            console.log('Colonnes mises à jour:', columnsJsonInput.value); // Debug
+        }
+        
+        // Fonction pour ajouter une ligne de colonne
+        function addColumn(initialData = {}) {
+            columnCount++;
+            const columnHtml = `
+                <div class="row mb-2 column-row" id="column-${columnCount}">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control column-name" placeholder="Nom technique" required 
+                               pattern="[a-zA-Z_][a-zA-Z0-9_]*" title="Le nom doit commencer par une lettre et ne contenir que des lettres, chiffres et underscores"
+                               value="${initialData.name || ''}">
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control column-display-name" placeholder="Nom d'affichage" required
+                               value="${initialData.display_name || ''}">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select column-type" required>
+                            <option value="string" ${initialData.type === 'string' ? 'selected' : ''}>Texte</option>
+                            <option value="integer" ${initialData.type === 'integer' ? 'selected' : ''}>Nombre entier</option>
+                            <option value="float" ${initialData.type === 'float' ? 'selected' : ''}>Nombre décimal</option>
+                            <option value="date" ${initialData.type === 'date' ? 'selected' : ''}>Date</option>
+                            <option value="boolean" ${initialData.type === 'boolean' ? 'selected' : ''}>Oui/Non</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-danger btn-sm remove-column" data-column="${columnCount}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            columnsContainer.insertAdjacentHTML('beforeend', columnHtml);
+            
+            // Mettre à jour le JSON immédiatement après l'ajout
+            setTimeout(updateColumnsJson, 10);
+        }
+        
+        // Utiliser la délégation d'événements pour la suppression
+        columnsContainer.addEventListener('click', function(e) {
+            const target = e.target.closest('.remove-column');
+            if (target) {
+                const columnId = target.getAttribute('data-column');
+                const columnElement = document.getElementById(`column-${columnId}`);
+                if (columnElement) {
+                    columnElement.remove();
+                    updateColumnsJson();
+                }
+            }
+        });
+        
+        // Mettre à jour le JSON quand les champs changent
+        columnsContainer.addEventListener('input', function(e) {
+            if (e.target.classList.contains('column-name') || 
+                e.target.classList.contains('column-display-name')) {
+                updateColumnsJson();
+            }
+        });
+        
+        // Mettre à jour le JSON quand les selects changent
+        columnsContainer.addEventListener('change', function(e) {
+            if (e.target.classList.contains('column-type')) {
+                updateColumnsJson();
+            }
+        });
+        
+        // Ajouter la première colonne par défaut
+        addColumn();
+        
+        // Gérer l'ajout de colonnes
+        addColumnBtn.addEventListener('click', function() {
+            addColumn();
+        });
+        
+        // Validation avant soumission
+        document.getElementById('create-table-form').addEventListener('submit', function(e) {
+            // Mettre à jour une dernière fois avant soumission
+            updateColumnsJson();
+            
+            const columnsValue = columnsJsonInput.value;
+            console.log('Valeur JSON avant soumission:', columnsValue); // Debug
+            
+            // Vérifier que le JSON n'est pas vide
+            if (!columnsValue || columnsValue.trim() === '' || columnsValue === '[]') {
+                e.preventDefault();
+                alert('Vous devez ajouter au moins une colonne avec des données valides');
+                return false;
+            }
+            
+            let columns;
+            try {
+                columns = JSON.parse(columnsValue);
+            } catch (error) {
+                e.preventDefault();
+                alert('Erreur dans le format des colonnes. Veuillez vérifier vos données.');
+                console.error('Erreur de parsing JSON:', error);
+                return false;
+            }
+            
+            // Vérifier qu'il y a au moins une colonne
+            if (columns.length === 0) {
+                e.preventDefault();
+                alert('Vous devez ajouter au moins une colonne');
+                return false;
+            }
+            
+            // Vérifier que tous les champs sont remplis
+            for (let col of columns) {
+                if (!col.name || !col.display_name || !col.type) {
+                    e.preventDefault();
+                    alert('Toutes les colonnes doivent avoir un nom technique, un nom d\'affichage et un type');
+                    return false;
+                }
+                
+                // Vérifier le format du nom technique
+                if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col.name)) {
+                    e.preventDefault();
+                    alert('Le nom technique "' + col.name + '" est invalide. Il doit commencer par une lettre et ne contenir que des lettres, chiffres et underscores.');
+                    return false;
+                }
+            }
+            
+            console.log('Formulaire validé, soumission...'); // Debug
+            return true;
+        });
+    });
+</script>
+<style>
+    /* Ajoutez ces styles au fichier static/css/style.css ou créez un fichier séparé */
+
+/* ===== Styles pour la création de tables ===== */
+
+/* Animation pour les nouvelles colonnes */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.column-row {
+    animation: slideInLeft 0.4s ease-out;
+    transition: all 0.3s ease;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.75rem !important;
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.03) 0%, transparent 50%);
+}
+
+.column-row:hover {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.08) 0%, rgba(102, 126, 234, 0.02) 50%);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+/* Effet de suppression */
+@keyframes slideOutRight {
+    to {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+}
+
+.column-row.removing {
+    animation: slideOutRight 0.3s ease-out forwards;
+}
+
+/* Bouton ajouter colonne */
+#add-column {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+#add-column::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+#add-column:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+#add-column:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+#add-column i {
+    transition: transform 0.3s ease;
+}
+
+#add-column:hover i {
+    transform: rotate(90deg);
+}
+
+/* Inputs avec animation */
+.column-row input,
+.column-row select {
+    transition: all 0.3s ease;
+    border: 2px solid #e5e7eb;
+}
+
+.column-row input:focus,
+.column-row select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    transform: scale(1.02);
+}
+
+/* Bouton supprimer avec effet */
+.remove-column {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.remove-column::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+}
+
+.remove-column:hover::before {
+    width: 100px;
+    height: 100px;
+}
+
+.remove-column:hover {
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* Indicateur de validation */
+.column-row input:valid {
+    border-left: 3px solid #10b981;
+}
+
+.column-row input:invalid:not(:placeholder-shown) {
+    border-left: 3px solid #ef4444;
+}
+
+/* Compteur de colonnes */
+#columns-container::before {
+    content: attr(data-count) ' colonne(s)';
+    display: block;
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+/* Zone de drop visuelle */
+#columns-container {
+    min-height: 80px;
+    border: 2px dashed transparent;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+#columns-container:empty {
+    border-color: #e5e7eb;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+#columns-container:empty::after {
+    content: '👆 Cliquez sur "Ajouter une colonne" pour commencer';
+    display: block;
+    text-align: center;
+    color: #9ca3af;
+    padding: 2rem;
+}
+
+/* Labels améliorés */
+.form-label {
+    position: relative;
+    padding-left: 0.5rem;
+}
+
+.form-label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 70%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+}
+
+/* Aide contextuelle */
+.form-text {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-text::before {
+    content: '💡';
+    margin-right: 0.25rem;
+}
+
+/* Animation du formulaire */
+#create-table-form {
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* Messages d'erreur personnalisés */
+input:invalid:not(:placeholder-shown) + .form-text {
+    color: #ef4444;
+}
+
+input:invalid:not(:placeholder-shown) + .form-text::before {
+    content: '⚠️';
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .column-row {
+        padding: 0.5rem;
+    }
+    
+    .column-row .col-md-4,
+    .column-row .col-md-3,
+    .column-row .col-md-1 {
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+{% endblock %}

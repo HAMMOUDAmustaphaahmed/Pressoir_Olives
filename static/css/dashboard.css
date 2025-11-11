@@ -1,0 +1,266 @@
+/* Fichier: static/css/dashboard.css */
+
+/* ===== Cartes de statistiques ===== */
+.stats-card {
+    border-radius: 1rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.stats-card:hover::before {
+    left: 100%;
+}
+
+.stats-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
+}
+
+/* Couleurs dégradées pour les cartes */
+.bg-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.bg-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.bg-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+}
+
+.bg-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+.bg-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+}
+
+/* ===== Icônes dans les cartes de stats ===== */
+.stats-card .fa-2x {
+    opacity: 0.9;
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover .fa-2x {
+    opacity: 1;
+    transform: rotate(10deg) scale(1.1);
+}
+
+/* ===== Actions rapides ===== */
+.quick-actions .btn {
+    text-align: left;
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+    border: 2px solid transparent;
+}
+
+.quick-actions .btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 4px;
+    height: 0;
+    background: currentColor;
+    transition: height 0.3s ease;
+    transform: translateY(-50%);
+}
+
+.quick-actions .btn:hover::before {
+    height: 100%;
+}
+
+.quick-actions .btn:hover {
+    transform: translateX(10px);
+    border-color: currentColor;
+    background: white;
+}
+
+.quick-actions .btn-outline-primary:hover {
+    color: #667eea;
+}
+
+.quick-actions .btn-outline-success:hover {
+    color: #10b981;
+}
+
+.quick-actions .btn-outline-info:hover {
+    color: #3b82f6;
+}
+
+.quick-actions .btn i {
+    margin-right: 0.75rem;
+    transition: transform 0.3s ease;
+}
+
+.quick-actions .btn:hover i {
+    transform: scale(1.2);
+}
+
+/* ===== Liste des tables récentes ===== */
+.list-group-item {
+    border: none;
+    border-radius: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 1rem 1.25rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.list-group-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.list-group-item:hover::before {
+    transform: scaleY(1);
+}
+
+.list-group-item:hover {
+    transform: translateX(8px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, white 50%);
+}
+
+.list-group-item i {
+    color: #667eea;
+    margin-right: 0.75rem;
+    transition: transform 0.3s ease;
+}
+
+.list-group-item:hover i {
+    transform: rotate(15deg) scale(1.2);
+}
+
+.badge {
+    transition: all 0.3s ease;
+}
+
+.list-group-item:hover .badge {
+    transform: scale(1.1);
+}
+
+/* ===== En-têtes de section ===== */
+h1, h2, h3, h4, h5 {
+    position: relative;
+    display: inline-block;
+}
+
+h1::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+    animation: slideIn 0.6s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        width: 0;
+    }
+    to {
+        width: 60px;
+    }
+}
+
+/* ===== Animation d'entrée ===== */
+.card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== Chiffres animés ===== */
+.stats-card h4 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== Message vide ===== */
+.text-muted {
+    color: #6b7280 !important;
+}
+
+.py-4 {
+    padding: 2rem 0;
+}
+
+.fa-3x {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+    
+    .stats-card h4 {
+        font-size: 2rem;
+    }
+    
+    .quick-actions .btn {
+        padding: 1rem;
+    }
+}
+
+/* ===== Effets de brillance ===== */
+@keyframes shine {
+    to {
+        background-position: 200% center;
+    }
+}
+
+.card-header {
+    background-size: 200% auto;
+    animation: shine 3s linear infinite;
+}

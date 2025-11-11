@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Paramètres de l'Entreprise - Pressoir à Olives{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-cog"></i> Paramètres de l'Entreprise
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Informations de l'entreprise</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="company_name" class="form-label">Nom de l'entreprise</label>
+                        <input type="text" class="form-control" id="company_name" name="company_name" 
+                               value="{{ settings.name if settings else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="company_address" class="form-label">Adresse</label>
+                        <textarea class="form-control" id="company_address" name="company_address" rows="3" required>{{ settings.address if settings else '' }}</textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="company_phone" class="form-label">Téléphone</label>
+                            <input type="text" class="form-control" id="company_phone" name="company_phone" 
+                                   value="{{ settings.phone if settings else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="company_email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="company_email" name="company_email" 
+                                   value="{{ settings.email if settings else '' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="company_logo" class="form-label">Logo (URL)</label>
+                        <input type="url" class="form-control" id="company_logo" name="company_logo" 
+                               value="{{ settings.logo if settings else '' }}" 
+                               placeholder="https://example.com/logo.png">
+                        <div class="form-text">URL vers l'image du logo de l'entreprise</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Enregistrer les paramètres
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Aperçu de la facture</h5>
+            </div>
+            <div class="card-body">
+                {% if settings %}
+                <div class="border p-3 mb-3">
+                    <div class="text-center mb-3">
+                        {% if settings.logo %}
+                        <img src="{{ settings.logo }}" alt="Logo" style="max-height: 60px;" class="mb-2">
+                        {% endif %}
+                        <h5>{{ settings.name }}</h5>
+                        <p class="small mb-1">{{ settings.address }}</p>
+                        <p class="small mb-1">Tél: {{ settings.phone }} | Email: {{ settings.email }}</p>
+                    </div>
+                    <hr>
+                    
+                </div>
+                <p class="text-muted small">
+                    Cet aperçu montre comment les informations de votre entreprise apparaîtront sur les factures générées.
+                </p>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Configurez les informations de votre entreprise pour voir l'aperçu des factures.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Information</h5>
+            </div>
+            <div class="card-body">
+                <p class="small">
+                    <i class="fas fa-info-circle text-primary"></i>
+                    Ces informations seront utilisées pour générer les factures et autres documents officiels.
+                </p>
+                <p class="small">
+                    <i class="fas fa-lightbulb text-warning"></i>
+                    Assurez-vous que toutes les informations sont correctes et à jour.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
