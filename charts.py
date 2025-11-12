@@ -1,19 +1,29 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required, current_user
-from models import db, Chart, TableMetadata, ColumnMetadata
+from models import db, Chart, TableMetadata, ColumnMetadata, Season
 from main import permission_required
 from sqlalchemy import text
 from sqlalchemy.orm import joinedload
 
 charts_bp = Blueprint('charts', __name__)
 
+def get_active_season():
+    """Récupère la saison active"""
+    return Season.query.filter_by(is_active=True).first()
+
 @charts_bp.route('/add_chart', methods=['GET', 'POST'])
 @login_required
 @permission_required('read_write')
 def add_chart():
-    tables = TableMetadata.query.all()
+    active_season = get_active_season()
     
-        
+    if not active_season:
+        flash('Aucune saison active. Veuillez activer une saison d\'abord.', 'danger')
+        return redirect(url_for('seasons.manage_seasons'))
+    
+    # Récupérer uniquement les tables de la saison active
+    tables = TableMetadata.query.filter_by(season_id=active_season.id).all()
+    
     if request.method == 'POST':
         name = request.form.get('chart_name')
         table_name = request.form.get('table_name')
@@ -27,29 +37,45 @@ def add_chart():
             x_column=x_column,
             y_column=y_column,
             chart_type=chart_type,
-            user_id=current_user.id
+            user_id=current_user.id,
+            season_id=active_season.id  # Associer à la saison active
         )
         
         db.session.add(chart)
         db.session.commit()
-        flash('Graphique créé avec succès', 'success')
+        flash(f'Graphique créé avec succès dans la saison {active_season.name}', 'success')
         return redirect(url_for('charts.view_charts'))
     
-    return render_template('add_chart.html', tables=tables)
+    return render_template('add_chart.html', tables=tables, active_season=active_season)
 
 @charts_bp.route('/view_charts')
 @login_required
 @permission_required('read_only')
 def view_charts():
-    charts = Chart.query.filter_by(user_id=current_user.id).all()
-    return render_template('view_charts.html', charts=charts)
+    active_season = get_active_season()
+    
+    if not active_season:
+        flash('Aucune saison active.', 'warning')
+        charts = []
+    else:
+        # Récupérer uniquement les graphiques de la saison active pour l'utilisateur actuel
+        charts = Chart.query.filter_by(
+            user_id=current_user.id,
+            season_id=active_season.id
+        ).all()
+    
+    return render_template('view_charts.html', charts=charts, active_season=active_season)
 
 @charts_bp.route('/chart_data/<int:chart_id>')
 @login_required
 def chart_data(chart_id):
     chart = Chart.query.get_or_404(chart_id)
     
-    # Récupérer les données pour le graphique avec text()
+    # Vérifier que le graphique appartient à l'utilisateur ou que l'utilisateur est admin
+    if chart.user_id != current_user.id and current_user.access_level != 'full':
+        return jsonify({'error': 'Accès non autorisé'}), 403
+    
+    # Récupérer les données pour le graphique
     sql = text(f"SELECT `{chart.x_column}`, `{chart.y_column}` FROM `{chart.table_name}`")
     result = db.session.execute(sql)
     
@@ -57,18 +83,15 @@ def chart_data(chart_id):
     values = []
     
     for row in result:
-        # Gérer les valeurs None pour les labels
         label_value = row[0] if row[0] is not None else "N/A"
         labels.append(str(label_value))
         
-        # Convertir en float si possible, sinon utiliser l'index comme valeur
         try:
             if row[1] is not None:
                 values.append(float(row[1]))
             else:
                 values.append(0)
         except (ValueError, TypeError):
-            # Si ce n'est pas un nombre, utiliser l'index comme valeur
             values.append(len(values) + 1)
     
     return jsonify({
@@ -81,12 +104,30 @@ def chart_data(chart_id):
 @charts_bp.route('/get_table_columns/<table_name>')
 @login_required
 def get_table_columns(table_name):
-    table = TableMetadata.query.options(joinedload(TableMetadata.columns)).filter_by(name=table_name).first()
+    active_season = get_active_season()
+    
+    if not active_season:
+        return jsonify([])
+    
+    # Récupérer la table de la saison active
+    table = TableMetadata.query.options(
+        joinedload(TableMetadata.columns)
+    ).filter_by(
+        name=table_name,
+        season_id=active_season.id
+    ).first()
     
     if not table:
         return jsonify([])
     
-    columns = [{'name': col.name, 'display_name': col.display_name, 'type': col.type} for col in table.columns]
+    columns = [
+        {
+            'name': col.name, 
+            'display_name': col.display_name, 
+            'type': col.type
+        } 
+        for col in table.columns
+    ]
     return jsonify(columns)
 
 @charts_bp.route('/edit_chart/<int:chart_id>', methods=['GET', 'POST'])
@@ -94,7 +135,14 @@ def get_table_columns(table_name):
 @permission_required('read_write')
 def edit_chart(chart_id):
     chart = Chart.query.get_or_404(chart_id)
-    tables = TableMetadata.query.all()
+    active_season = get_active_season()
+    
+    # Vérifier que le graphique appartient à l'utilisateur
+    if chart.user_id != current_user.id and current_user.access_level != 'full':
+        flash('Vous ne pouvez pas modifier ce graphique', 'danger')
+        return redirect(url_for('charts.view_charts'))
+    
+    tables = TableMetadata.query.filter_by(season_id=active_season.id).all()
     
     if request.method == 'POST':
         chart.name = request.form.get('chart_name')

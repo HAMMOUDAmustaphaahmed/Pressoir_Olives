@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Créer une Saison - Pressoir à Olives{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-calendar-plus"></i> Créer une Nouvelle Saison
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Informations de la saison</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="season_name" class="form-label">Nom de la saison</label>
+                        <input type="text" class="form-control" id="season_name" name="season_name" 
+                               placeholder="Ex: 2024-2025" required>
+                        <div class="form-text">Format recommandé : ANNÉE-ANNÉE (ex: 2024-2025)</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="start_date" class="form-label">Date de début</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="end_date" class="form-label">Date de fin</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="make_active" name="make_active">
+                        <label class="form-check-label" for="make_active">
+                            Activer cette saison immédiatement
+                        </label>
+                        <div class="form-text">
+                            Si coché, cette saison deviendra la saison active et toutes les autres seront désactivées.
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Créer la saison
+                    </button>
+                    <a href="{{ url_for('seasons.manage_seasons') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Aide</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Conseils pour nommer votre saison :</strong></p>
+                <ul class="small">
+                    <li><strong>2024-2025</strong> - Format standard recommandé</li>
+                    <li><strong>Saison 2024</strong> - Format simple</li>
+                    <li><strong>Campagne 24-25</strong> - Format abrégé</li>
+                </ul>
+                
+                <p class="mt-3"><strong>Dates de la saison :</strong></p>
+                <p class="small">
+                    Définissez la période couverte par cette saison. Généralement, une saison de production d'olives 
+                    commence en octobre/novembre et se termine en mars/avril de l'année suivante.
+                </p>
+                
+                <p class="mt-3"><strong>Saison active :</strong></p>
+                <p class="small">
+                    Seule la saison active est visible par défaut. Toutes les nouvelles tables et graphiques 
+                    seront créés dans cette saison.
+                </p>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">Exemple</h5>
+            </div>
+            <div class="card-body">
+                <div class="border p-3 rounded">
+                    <p class="mb-2"><strong>Nom :</strong> 2024-2025</p>
+                    <p class="mb-2"><strong>Début :</strong> 01/11/2024</p>
+                    <p class="mb-2"><strong>Fin :</strong> 30/04/2025</p>
+                    <p class="mb-0"><strong>Statut :</strong> <span class="badge bg-success">Active</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Suggérer automatiquement les dates
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    const seasonNameInput = document.getElementById('season_name');
+    
+    // Suggestion de nom basée sur l'année actuelle
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // +1 car les mois commencent à 0
+    
+    // Si on est après octobre, suggérer année actuelle - année suivante
+    if (currentMonth >= 10) {
+        seasonNameInput.placeholder = `Ex: ${currentYear}-${currentYear + 1}`;
+        startDateInput.value = `${currentYear}-11-01`;
+        endDateInput.value = `${currentYear + 1}-04-30`;
+    } else {
+        // Sinon suggérer année précédente - année actuelle
+        seasonNameInput.placeholder = `Ex: ${currentYear - 1}-${currentYear}`;
+        startDateInput.value = `${currentYear - 1}-11-01`;
+        endDateInput.value = `${currentYear}-04-30`;
+    }
+    
+    // Validation des dates
+    endDateInput.addEventListener('change', function() {
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+        
+        if (endDate <= startDate) {
+            alert('La date de fin doit être après la date de début');
+            endDateInput.value = '';
+        }
+    });
+});
+</script>
+{% endblock %}
